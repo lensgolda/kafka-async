@@ -38,7 +38,8 @@
      {(keyword topic)
       (map (fn [consumer-record]
              {:timestamp (.timestamp consumer-record)
-              :message (.value consumer-record)})
+              :message   (.value consumer-record)
+              :key       (.key consumer-record)})
        consumer-records)})))
 
 (defn create!
