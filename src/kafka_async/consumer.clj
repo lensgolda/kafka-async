@@ -93,13 +93,12 @@
        (let [records (.poll consumer 1)
              records-per-topic (->> (reduce conj (map (records-by-topic records) topics))
                                     (into {} (filter (comp not-empty val))))]
-
-         (if-not (empty? records-per-topic)
+         (when-not (empty? records-per-topic)
            (do
              (>! out-chan records-per-topic)
              (<! commit-chan)
-             (.commitSync consumer))
-           (recur))))
+             (.commitSync consumer)))
+         (recur)))
 
      {:out-chan out-chan :commit-chan commit-chan :consumer-id consumer-id})))
 
