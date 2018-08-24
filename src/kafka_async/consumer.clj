@@ -1,11 +1,11 @@
 (ns kafka-async.consumer
-  (import org.apache.kafka.clients.consumer.KafkaConsumer)
-  (import org.apache.kafka.clients.consumer.ConsumerRecords)
-  (import java.util.ArrayList)
-  (import java.util.UUID)
   (:require
    [kafka-async.commons :as commons]
-   [clojure.core.async :as a :refer [>! <! close! chan timeout go-loop]]))
+   [clojure.core.async :as a :refer [>! <! close! chan timeout go-loop]])
+  (:import (org.apache.kafka.clients.consumer KafkaConsumer)
+           (org.apache.kafka.clients.consumer ConsumerRecords)
+           (java.util ArrayList)
+           (java.util UUID)))
 
 (def consumers
   "CLojure `atom` containing all the registered consumers in Kafka-Async"
@@ -17,8 +17,8 @@
    :auto.commit.interval.ms, "1000"
    :session.timeout.ms "30000"
    :key.deserializer "org.apache.kafka.common.serialization.StringDeserializer"
-   :value.deserializer "org.apache.kafka.common.serialization.StringDeserializer"
-   })
+   :value.deserializer "org.apache.kafka.common.serialization.StringDeserializer"})
+
 
 (defn records-by-topic
   "Higher order function that receives a set of consumer records and returns a function that expects a topic.
@@ -35,11 +35,11 @@
   [records]
   (fn [topic]
     (let [consumer-records (.records records topic)]
-    {(keyword topic)
-     (map (fn [consumer-record]
-            {:timestamp (.timestamp consumer-record)
-             :message (.value consumer-record)})
-      consumer-records)})))
+     {(keyword topic)
+      (map (fn [consumer-record]
+             {:timestamp (.timestamp consumer-record)
+              :message (.value consumer-record)})
+       consumer-records)})))
 
 (defn create!
    "Creates a Kafka Consumer client with a core.async interface given the broker's list and group id.
@@ -91,8 +91,8 @@
      (go-loop []
        (let [records (.poll consumer 1)
              records-per-topic (->> (reduce conj (map (records-by-topic records) topics))
-                                    (into {} (filter (comp not-empty val)))
-                                   )]
+                                    (into {} (filter (comp not-empty val))))]
+
          (if-not (empty? records-per-topic)
            (do
              (>! out-chan records-per-topic)

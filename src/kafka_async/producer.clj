@@ -1,10 +1,10 @@
 (ns kafka-async.producer
-  (import org.apache.kafka.clients.producer.KafkaProducer)
-  (import org.apache.kafka.clients.producer.ProducerRecord)
-  (import java.util.UUID)
   (:require
    [kafka-async.commons :as commons]
-   [clojure.core.async :as a :refer [>! <! >!! close! chan timeout go-loop]]))
+   [clojure.core.async :as a :refer [>! <! >!! close! chan timeout go-loop]])
+  (:import (org.apache.kafka.clients.producer KafkaProducer)
+           (org.apache.kafka.clients.producer ProducerRecord)
+           (java.util UUID)))
 
 (def producers
   "CLojure `atom` containing all the registered producers in Kafka-Async"
@@ -18,8 +18,8 @@
    :buffer.memory "33554432"
    :key.serializer "org.apache.kafka.common.serialization.StringSerializer"
    :value.serializer "org.apache.kafka.common.serialization.StringSerializer"
-   :acks "1"
-   })
+   :acks "1"})
+
 
 (def default-in-chan-size
   "Producer core.async input channel default buffer size"
@@ -57,24 +57,24 @@
   {:doc/format :markdown}
   ([servers client-id] (create! servers client-id default-in-chan-size {}))
   ([servers client-id buffer-size options]
-  (let [producer (-> {:bootstrap.servers servers :client.id client-id}
-                     (merge producer-defaults options)
-                     (commons/map-to-properties)
-                     (KafkaProducer.))
-        producer-id (.toString (UUID/randomUUID))
-        in-chan (chan buffer-size (map to-producer-record))]
+   (let [producer (-> {:bootstrap.servers servers :client.id client-id}
+                      (merge producer-defaults options)
+                      (commons/map-to-properties)
+                      (KafkaProducer.))
+         producer-id (.toString (UUID/randomUUID))
+         in-chan (chan buffer-size (map to-producer-record))]
 
-    (swap! producers (fn [saved-producers]
-                       (let [info {(keyword producer-id) {:chan in-chan :producer producer}}]
-                         (merge saved-producers info))))
-    (go-loop []
-      (let [event (<! in-chan)]
-        (if-not (nil? event)
-          (do
-            (.send producer event)
-            (recur)
-            ))))
-    {:chan in-chan :id producer-id})))
+     (swap! producers (fn [saved-producers]
+                        (let [info {(keyword producer-id) {:chan in-chan :producer producer}}]
+                          (merge saved-producers info))))
+     (go-loop []
+       (let [event (<! in-chan)]
+         (if-not (nil? event)
+           (do
+             (.send producer event)
+             (recur)))))
+
+     {:chan in-chan :id producer-id})))
 
 (defn close
   "Closes a Kafka producer and the respective core-async channel given the producer id obtained in `create!`.
