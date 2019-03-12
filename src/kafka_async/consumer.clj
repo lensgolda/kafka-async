@@ -109,11 +109,10 @@
   Returns `nil` if there is no consumer with the given id or a sequence of all consumers otherwise"
   [consumer-id]
   (let [{chan :chan commit-chan :commit-chan consumer :consumer} ((keyword consumer-id) @consumers)]
-    (if-not (nil? (and chan consumer))
+    (when-not (nil? (and chan consumer))
       (do
         (close! chan)
         (close! commit-chan)
         (.close consumer)
-        (swap! consumers dissoc (keyword consumer-id)))
-      (println "consumer not found"))))
+        (swap! consumers dissoc (keyword consumer-id))))))
 

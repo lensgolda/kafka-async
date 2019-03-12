@@ -1,4 +1,4 @@
-(defproject kafka-async "0.1.2"
+(defproject kafka-async "0.1.5"
   :description "Core.async library for Apache Kafka"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
